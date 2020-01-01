@@ -10,6 +10,7 @@ export default class myLineGraph extends Component {
 
   componentDidMount() {
     const myChartRef = this.chartRef.current.getContext("2d");
+    console.log("Mounted + creates options");
     for (let i = 10; i < 36; i++) {
       preselectedTestGroups.push(
         <Option key={i.toString(36) + i}>{i.toString(36) + i}</Option>
@@ -38,7 +39,7 @@ export default class myLineGraph extends Component {
     return (
       <div className={classes.graphContainer}>
         <canvas id="myChart" ref={this.chartRef} />
-        <Row type="flex" width>
+        <Row type="flex">
           <Col span={15}>
             <Select
               style={{ width: "100%" }}
