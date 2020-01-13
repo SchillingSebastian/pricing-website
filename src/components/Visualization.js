@@ -29,7 +29,6 @@ export default class MyLineGraph extends Component {
     chartRef = React.createRef();
 
     componentDidMount() {
-
         this.loadData()
     }
 
@@ -182,6 +181,7 @@ export default class MyLineGraph extends Component {
 
     pageDataLoaded() {
         const {stateData} = this.state;
+        var colors=["#377EB8", "#66A61E","#984EA3","#FF7F00", "#C42E60", "#FB8072", "#1B9E77", "#737373"];
 
 
         var selections = this.state.selectedCat;
@@ -197,19 +197,21 @@ export default class MyLineGraph extends Component {
 
         //iterate over selected values
         var indexOverallime=-1;
+        var colorindex=0;
         for(let index in selections) {
-            var chategoryData = {}
-            chategoryData.label = selections[index]
+            var categoryData = {}
+            categoryData.label = selections[index]
             if(selections[index]!="overall_time"){
-                chategoryData.data =[]
+                categoryData.data =[]
                 for(var i = 0; i < tempArray[2].length; i++){
                     var instanceName = tempArray[2][i]["instance"]["name"]
-                    chategoryData.data.push(Math.round(tempArray[2][i][selections[index]] * 100) / 100);
+                    categoryData.data.push(Math.round(tempArray[2][i][selections[index]] * 100) / 100);
 
                 }
-                //backgroundColor: window.chartColors.green,
+                categoryData.backgroundColor= colors[colorindex%8];
+                colorindex++;
                 console.log(categoryData)
-                chartDataTemp.push(chategoryData)
+                chartDataTemp.push(categoryData)
             }else indexOverallime=index
 
 
@@ -232,7 +234,8 @@ export default class MyLineGraph extends Component {
 
                 }
             }
-            //backgroundColor: window.chartColors.green,
+            categoryData.backgroundColor= colors[colorindex%8];
+            colorindex++;
             console.log(categoryData)
             chartDataTemp.push(categoryData)
         }
@@ -382,7 +385,7 @@ export default class MyLineGraph extends Component {
                     options={{
                         title: {
                         display: true,
-                        text: {displayedName}
+                        text: displayedName
                     },
                         tooltips: {
                         mode: 'index',
