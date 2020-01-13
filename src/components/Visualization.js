@@ -1,158 +1,421 @@
-import React, { Component } from "react";
-import { Button, Select, Row, Col } from "antd";
-import { Chart } from "react-google-charts";
+import React, {Component} from "react";
+import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
 import classes from "./LineGraph.module.css";
-const { Option } = Select;
+import {
+    G2,
+    Chart,
+    Geom,
+    Axis,
+    Tooltip,
+    Coord,
+    Label,
+    Legend,
+    View,
+    Guide,
+    Shape,
+    Facet,
+    Util
+} from "bizcharts";
+import DataSet from "@antv/data-set";
 
-export default class myLineGraph extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      chartData: null,
-      isLoading: false,
-      error: null,
-      selectedCat: ["OVERALL TIME"]
+const {Option} = Select;
+const {Title} = Typography;
+const {confirm} = Modal;
+
+export default class MyLineGraph extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            chartData: null,
+            isLoading: false,
+            error: null,
+            selectedCat: ["pricing_time"],
+            modalVisible:false,
+            allTestsets: null,
+            allSettings:null,
+            selectedTestset:"short",
+            selectedSetting:"default",
+            settingData:null,
+            modalSettingTableVisible:false
+        };
+    }
+
+    chartRef = React.createRef();
+
+    componentDidMount() {
+
+        this.loadData()
+    }
+
+    loadData(){
+        this.setState({isLoading: true});
+        console.log("fetching "+ "http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        fetch("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+            .then(response => {
+                console.log(response)
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    ;
+                    throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                }
+            })
+            .then(json => this.setState({chartData: json, isLoading: false}))
+            .catch(error => this.setState({error, isLoading: false}));
+
+    }
+
+    showModal = () => {
+        fetch("http://35.246.177.194:8080/api/testsets/all")
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Error in fetching API Data");
+                }
+            })
+            .then(json => this.setState({allTestsets: json}))
+            .catch(error => console.log("error fetching testsets"));
+        fetch("http://35.246.177.194:8080/api/settings/all")
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Error in fetching API Data");
+                }
+            })
+            .then(json => this.setState({allSettings: json}))
+            .catch(error => console.log("error fetching settings"));
+
+
+        this.setState({
+            modalVisible: true,
+        });
     };
-  }
 
-  chartRef = React.createRef();
+    updateSettingTable = () =>{
+        fetch("http://35.246.177.194:8080/api/settings/name/"+this.state.selectedSetting)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Error in fetching API Data");
+                }
+            })
+            .then(json => this.setState({settingData: json, modalSettingTableVisible: true}))
+            .catch(error => console.log("error fetching settingdata"));
+    }
+    showPropsConfirm(testsetName,settingName) {
+        confirm({
+            title: 'Run missing',
+            content: 'This testset/setting combination is missing in the database. Do you want to schedule a run?',
+            okText: 'Yes',
+            okType: 'primary',
+            okButtonProps: {
+                disabled: false,
+            },
+            cancelText: 'No',
+            onOk() {
+                console.log("http://35.246.177.194:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing")
+                fetch("http://35.246.177.194:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing",{method: 'POST'})
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error("Error in fetching API Data");
+                        }
+                    })
+                    .then(json => this.setState({settingData: json, modalSettingTableVisible: true}))
+                    .catch(error => console.log("error fetching settingdata"));
+            },
+            onCancel() {
+            },
+        });
+    }
 
-  componentDidMount() {
-    console.log("Mounted + creates options");
+    handleOk = e => {
+        console.log("fetching"+ "http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        fetch("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                }
+            })
+            .then(json => this.setState({chartData: json}))
+            .catch(error => this.showPropsConfirm(this.state.selectedTestset, this.state.selectedSetting));
 
-    this.setState({ isLoading: true });
-    fetch("api/giveMeSample")
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error("Error in fetching API Data");
+        this.setState({
+            modalVisible: false,
+        });
+    };
+
+    handleCancel = e => {
+        console.log(e);
+        this.setState({
+            modalVisible: false,
+        });
+    };
+
+    render() {
+
+
+
+        const {isLoading, error, selectedCat} = this.state;
+        if (error) {
+            return (
+                <div>
+                    <Col span={3}>
+                    </Col>
+                    <Col>
+                        <Row><Title level={4}>Error occured while fetching API data</Title></Row>
+                        <Row>Error during fetch call:</Row>
+                        <Row>{error.message}</Row>
+                    </Col>
+                </div>
+            );
         }
-      })
-      .then(json => this.setState({ chartData: json, isLoading: false }))
-      .catch(error => this.setState({ error, isLoading: false }));
-    //setting up options
-    if (this.state.chartData != null) {
-    }
-  }
+        if (isLoading) {
+            return (
+                <div>
+                    <p>Is Loading</p>
+                </div>
+            );
+        }
+        if (selectedCat.length == 0) {
+        }
 
-  render() {
-    const { isLoading, error, selectedCat } = this.state;
-    if (error) {
-      return (
-        <div>
-          <p>Error see:</p>
-          <p>{error.message}</p>
-        </div>
-      );
-    }
-    if (isLoading) {
-      return (
-        <div>
-          <p>Is Loading</p>
-        </div>
-      );
-    }
-    if (selectedCat.length == 0) {
+        if (this.state.chartData != null) {
+
+            return this.pageDataLoaded();
+        } else {
+            return <div>null</div>;
+        }
     }
 
-    if (this.state.chartData != null) {
-      return this.pageDataLoaded();
-    } else {
-      return <div>null</div>;
-    }
-  }
+    pageDataLoaded() {
+        const {chartData} = this.state;
 
-  pageDataLoaded() {
-    const { chartData } = this.state;
-    //actual Data construction
-    //retrieve actual data
-    var tempArray = [];
-    Object.keys(chartData).forEach(function(key) {
-      tempArray.push(chartData[key]);
-    });
-    var data = tempArray[0];
-    //retrieve possible Display Options
-    var times = [];
-    for (let name in data) {
-      times.push(<Option key={name.toString()}>{name.toString()}</Option>);
-    }
-    //retrieve testnames
-    var testnamesData = data.AGGREGATIONS;
-    var testnames = [];
-    for (let name in testnamesData) {
-      testnames.push(name);
-    }
-    //construct chart data array
-    var actualChartData = [];
-    var indexes = ["Instances"].concat(this.state.selectedCat);
-    actualChartData[0] = indexes;
-    for (let i = 0; i < testnames.length; i++) {
-      //add name
-      var testinstanceData = [];
-      testinstanceData.push(testnames[i]);
-      //add Data in correspondance to selected Values
-      var selections = this.state.selectedCat;
-      for (let j = 0; j < selections.length; j++) {
-        var instanceData = data[selections[j]];
-        testinstanceData.push(instanceData[testnames[i]]);
+
+        var selections = this.state.selectedCat;
+
+
+
+        var tempArray = [];
+        Object.keys(chartData).forEach(function (key) {
+            tempArray.push(chartData[key]);
+        });
+        var chartDataArrayBiz=[]
+
+
+        //iterate over selected values
+        var indexOverallime=-1;
+        for(let index in selections) {
+            var chartDataCategoryBiz = {}
+            chartDataCategoryBiz.name = selections[index]
+            if(selections[index]!="overall_time"){
+                for(var i = 0; i < tempArray[2].length; i++){
+                    var instanceName = tempArray[2][i]["instance"]["name"]
+                    chartDataCategoryBiz[instanceName] = Math.round(tempArray[2][i][selections[index]] * 100) / 100;
+
+                }
+                chartDataArrayBiz.push(chartDataCategoryBiz)
+            }else indexOverallime=index
+
+
+
+
+        }
+        if(indexOverallime=-1){
+            var chartDataCategoryBiz = {}
+            chartDataCategoryBiz.name = "overall_time"
+            for(var i = 0; i < tempArray[2].length; i++) {
+                for(var i = 0; i < tempArray[2].length; i++){
+                    var instanceName = tempArray[2][i]["instance"]["name"]
+                    var overallTime= tempArray[2][i]["overall_time"]
+                    for(let index in selections){
+                        if(selections[index]!="overall_time")overallTime = overallTime - tempArray[2][i][selections[index]]
+                    }
+
+                    chartDataCategoryBiz[instanceName] = Math.round(overallTime * 100) / 100;
+
+                }
+            }
+
+            var chartDataArrayWithOverallTime=[]
+            chartDataArrayWithOverallTime.push(chartDataCategoryBiz)
+            chartDataArrayWithOverallTime = chartDataArrayWithOverallTime.concat(chartDataArrayBiz)
+            chartDataArrayBiz= chartDataArrayWithOverallTime
+        }
+
+        //get all instances as names
+        var instanceNames=[]
+        for(var i = 0; i < tempArray[2].length; i++){
+            instanceNames.push(tempArray[2][i]["instance"]["name"])
+        }
+
+
+        var chartHeight = window.innerHeight - 200;
+        var chartWidth = window.innerWidth - window.innerWidth * 0.15;
+
+        console.log(chartDataArrayBiz);
+        const ds = new DataSet();
+        let dv = ds.createView().source(chartDataArrayBiz);
+        dv.transform({
+            type: "fold",
+            fields: instanceNames,
+            // 展开字段集
+            key: "月份",
+            // key字段
+            value: "月均降雨量" // value字段
+        });
+
+
+
+
+
+
+      //retrieve display options
+      var times = [];
+      for (let name in tempArray[2][0]) {
+
+        var nameStr = name.toString();
+        if(name.toString()!="job" && name.toString()!="instance" && name.toString()!="id" && name.toString()!="setting")times.push(<Option key={nameStr}>{nameStr}</Option>);
       }
-      actualChartData.push(testinstanceData);
+
+      //retrieveTestsets to display in modal
+        var testsetOptions=[]
+        var testsets = this.state.allTestsets
+        if(testsets!= null){
+            Object.keys(testsets).forEach(function (key) {
+                testsetOptions.push(<Option key={testsets[key].name}> {testsets[key].name} </Option>);
+            });
+
+        }
+
+        //retrieve Settings to be displayed in modal
+        var settingOptions=[]
+        var settings = this.state.allSettings
+        if(settings != null){
+            Object.keys(settings).forEach(function (key) {
+                settingOptions.push(<Option key={settings[key].name}> {settings[key].name} </Option>);
+            });
+        }
+
+        //setTableData
+        var columns=[
+            {
+                title: 'Settingname',
+                dataIndex: 'settingname',
+                key: 'settingname'
+            },
+            {
+                title: 'Value',
+                dataIndex: 'value',
+                key: 'value'
+            }
+
+        ]
+        var datasource=[];
+        var displayedSetting = this.state.settingData;
+        if(displayedSetting != null){
+            var keyindex =0;
+            Object.keys(displayedSetting).forEach(function (key) {
+                if(key != "id" && key!="name" && key != "settingsfile"){
+                    var settingTable={}
+                    settingTable.settingname = key;
+                    settingTable.value = ""+displayedSetting[key]
+                    settingTable.key = keyindex
+                    datasource.push(settingTable)
+                    keyindex++;
+                }
+            });
+        }
+
+
+
+        var displayedName = tempArray[0]+' on setting '+tempArray[1]["settingsfile"]
+        return (
+          <div className={classes.graphContainer}>
+              <Modal
+                  title="Select testset and setting"
+                  visible={this.state.modalVisible}
+                  onOk={this.handleOk}
+                  onCancel={this.handleCancel}
+              >
+                  <Row><div>Testset</div></Row>
+                  <Select
+                      style={{ width: "100%" }}
+                      mode="single"
+                      placeholder="Please Select"
+                      defaultValue={this.state.selectedTestset}
+                      onChange={value => {
+                          this.setState({ selectedTestset: value });
+                      }}
+                  >
+                      {testsetOptions}
+                  </Select>
+                  <Row><div>Setting</div></Row>
+                  <Select
+                      style={{ width: "100%" }}
+                      mode="single"
+                      placeholder="Please Select"
+                      defaultValue={this.state.selectedSetting}
+                      onChange={value => {
+                          this.setState({ selectedSetting: value });
+                          this.updateSettingTable();
+                      }}
+                  >
+                      {settingOptions}
+                  </Select>
+                  <Table columns={columns} dataSource={datasource}></Table>
+              </Modal>
+              <Row> <Title level={4}>{displayedName}</Title></Row>
+              <Row type="flex">
+                  <Col span={15}>
+                      <Select
+                          style={{ width: "100%" }}
+                          mode="multiple"
+                          placeholder="Please Select"
+                          defaultValue={this.state.selectedCat}
+                          onChange={value => {
+
+                              this.setState({ selectedCat: value });
+                          }}
+                      >
+                          {times}
+                      </Select>
+                  </Col>
+                  <Col span={1}></Col>
+                  <Col span={1}>
+                      <Button type="primary" style={{ flex: 1 }} onClick={this.showModal}>Configure Chart</Button>
+                  </Col>
+              </Row>
+            <div style={{ display: "flex", maxWidth: 1600 }}>
+                <Chart height={chartHeight} width={chartWidth} data={dv}  forceFit>
+                    <Legend />
+                    <Axis name="x" />
+                    <Axis name="y" />
+                    <Tooltip />
+                    <Geom
+                        type="intervalStack"
+                        position="月份*月均降雨量"
+                        color={"name"}
+                        style={{
+                            stroke: "#fff",
+                            lineWidth: 1
+                        }}
+                    />
+                </Chart>
+            </div>
+
+          </div>
+        );
     }
-    var chartHeight = window.innerHeight - 200;
-    var chartWidth = window.innerWidth - window.innerWidth * 0.15;
 
-    var displayedName = data.testname;
-    return (
-      <div className={classes.graphContainer}>
-        <div style={{ display: "flex", maxWidth: 1600 }}>
-          <Chart
-            width={chartWidth}
-            height={chartHeight}
-            chartType="ColumnChart"
-            loader={<div>Loading Chart</div>}
-            data={actualChartData}
-            options={{
-              title: displayedName,
-              chartArea: { width: "80%" },
-              isStacked: false,
-              hAxis: {
-                title: "Instances",
-                minValue: 0
-              },
-              vAxis: {
-                title: "Time"
-              }
-            }}
-            // For tests
-            rootProps={{ "data-testid": "3" }}
-          />
-        </div>
-        <Row type="flex">
-          <Col span={15}>
-            <Select
-              style={{ width: "100%" }}
-              mode="multiple"
-              placeholder="Please Select"
-              defaultValue={this.state.selectedCat}
-              onChange={value => {
-                //console.log(value);
-                this.setState({ selectedCat: value });
-              }}
-            >
-              {times}
-            </Select>
-          </Col>
-          <Col span={1}>
-            <Button style={{ flex: 1 }}>Test</Button>
-          </Col>
-        </Row>
-      </div>
-    );
-  }
-
-  handleChanges(value) {
-    console.log(`selected ${value}`);
-    console.log(this.state.selectedCat);
-  }
+    handleChanges(value) {
+        console.log(`selected ${value}`);
+        console.log(this.state.selectedCat);
+    }
 }

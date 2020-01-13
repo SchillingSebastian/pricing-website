@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
 const {Title} = Typography;
 
-export default class RunningJobs extends Component{
+export default class AllJobs extends Component{
     constructor(props) {
         super(props);
         this.state = {
@@ -11,14 +11,13 @@ export default class RunningJobs extends Component{
         };
     }
     componentDidMount() {
-        console.log("http://35.246.177.194:8080/api/jobs/running")
-        fetch("http://35.246.177.194:8080/api/jobs/running")
+        console.log("http://35.246.177.194:8080/api/jobs/all")
+        fetch("http://35.246.177.194:8080/api/jobs/all")
             .then(response => {
-                console.log(response)
                 if (response.ok) {
                     return response.json();
                 } else {
-                    throw new Error("/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                    throw new Error("/api/jobs/all");
                 }
             })
             .then(json => this.setState({runningJobsData: json, isLoading: false}))
@@ -28,25 +27,40 @@ export default class RunningJobs extends Component{
     render(){
         var columns=[
             {
+              title: 'Job Name',
+              dataIndex: 'name',
+                key: 'name'
+            },
+            {
                 title: 'Testset',
-                dataIndex: 'testsetName',
+                dataIndex: 'testsetname',
                 key: 'testsetName'
             },
             {
                 title: 'Setting',
-                dataIndex: 'settingsName',
-                key: 'settingsName'
+                dataIndex: 'settingname',
+                key: 'settingName'
             },
             {
                 title: 'Scheduled',
-                dataIndex: 'scheduled',
+                dataIndex: 'date_inserted',
                 key: 'scheduled'
             },
 
             {
                 title: 'Executed',
-                dataIndex: 'executed',
+                dataIndex: 'date_executed',
                 key: 'executed'
+            },
+            {
+                title: 'Finished',
+                dataIndex: 'date_finished',
+                key:'finished'
+            },
+            {
+                title: 'Author',
+                dataIndex: 'author',
+                key:'author'
             }
 
         ]
@@ -58,14 +72,22 @@ export default class RunningJobs extends Component{
             for(var i =0; i< runningjobs.length; i++){
                 var settingTable={}
                 Object.keys(runningjobs[i]).forEach(function (key) {
+                    if(key != "setting" && key!="testset"){
+                        settingTable[key] = runningjobs[i][key];
+                    }
+                    if(key == "setting"){
+                        settingTable["settingname"] = runningjobs[i][key]["name"]
+                    }
+                    if(key == "testset"){
+                        settingTable["testsetname"] = runningjobs[i][key]["name"]
+                    }
 
-                    settingTable[key] = runningjobs[i][key];
 
 
 
 
                 });
-                settingTable.key = runningjobs[i]["testsetName"] +keyindex;
+                settingTable.key = runningjobs[i]["testset"]["name"] +keyindex;
                 tabledata.push(settingTable);
                 console.log(settingTable)
             }

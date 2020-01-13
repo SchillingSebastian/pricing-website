@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@antv/g2plot": "^0.11.21",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.4.0",
     "@testing-library/user-event": "^7.2.1",
     "antd": "^3.26.5",
+    "bizcharts": "^3.5.6",
     "chart.js": "^2.9.3",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
@@ -35,5 +37,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000/"
+
+  "devDependencies": {
+    "@antv/data-set": "^0.10.2"
+  }
 }
