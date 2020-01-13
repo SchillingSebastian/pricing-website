@@ -1,32 +1,18 @@
 import React, {Component} from "react";
 import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
-import classes from "./LineGraph.module.css";
-import {
-    G2,
-    Chart,
-    Geom,
-    Axis,
-    Tooltip,
-    Coord,
-    Label,
-    Legend,
-    View,
-    Guide,
-    Shape,
-    Facet,
-    Util
-} from "bizcharts";
-import DataSet from "@antv/data-set";
 
+import { Bar } from 'react-chartjs-2';
+import classes from "./LineGraph.module.css";
 const {Option} = Select;
 const {Title} = Typography;
 const {confirm} = Modal;
+
 
 export default class MyLineGraph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartData: null,
+            stateData: null,
             isLoading: false,
             error: null,
             selectedCat: ["pricing_time"],
@@ -43,7 +29,6 @@ export default class MyLineGraph extends Component {
     chartRef = React.createRef();
 
     componentDidMount() {
-
         this.loadData()
     }
 
@@ -60,7 +45,7 @@ export default class MyLineGraph extends Component {
                     throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
                 }
             })
-            .then(json => this.setState({chartData: json, isLoading: false}))
+            .then(json => this.setState({stateData: json, isLoading: false}))
             .catch(error => this.setState({error, isLoading: false}));
 
     }
@@ -143,7 +128,7 @@ export default class MyLineGraph extends Component {
                     throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
                 }
             })
-            .then(json => this.setState({chartData: json}))
+            .then(json => this.setState({stateData: json}))
             .catch(error => this.showPropsConfirm(this.state.selectedTestset, this.state.selectedSetting));
 
         this.setState({
@@ -186,7 +171,7 @@ export default class MyLineGraph extends Component {
         if (selectedCat.length == 0) {
         }
 
-        if (this.state.chartData != null) {
+        if (this.state.stateData != null) {
 
             return this.pageDataLoaded();
         } else {
@@ -195,7 +180,8 @@ export default class MyLineGraph extends Component {
     }
 
     pageDataLoaded() {
-        const {chartData} = this.state;
+        const {stateData} = this.state;
+        var colors=["#377EB8", "#66A61E","#984EA3","#FF7F00", "#C42E60", "#FB8072", "#1B9E77", "#737373"];
 
 
         var selections = this.state.selectedCat;
@@ -203,24 +189,29 @@ export default class MyLineGraph extends Component {
 
 
         var tempArray = [];
-        Object.keys(chartData).forEach(function (key) {
-            tempArray.push(chartData[key]);
+        Object.keys(stateData).forEach(function (key) {
+            tempArray.push(stateData[key]);
         });
-        var chartDataArrayBiz=[]
+        var chartDataTemp=[]
 
 
         //iterate over selected values
         var indexOverallime=-1;
+        var colorindex=0;
         for(let index in selections) {
-            var chartDataCategoryBiz = {}
-            chartDataCategoryBiz.name = selections[index]
+            var categoryData = {}
+            categoryData.label = selections[index]
             if(selections[index]!="overall_time"){
+                categoryData.data =[]
                 for(var i = 0; i < tempArray[2].length; i++){
                     var instanceName = tempArray[2][i]["instance"]["name"]
-                    chartDataCategoryBiz[instanceName] = Math.round(tempArray[2][i][selections[index]] * 100) / 100;
+                    categoryData.data.push(Math.round(tempArray[2][i][selections[index]] * 100) / 100);
 
                 }
-                chartDataArrayBiz.push(chartDataCategoryBiz)
+                categoryData.backgroundColor= colors[colorindex%8];
+                colorindex++;
+                console.log(categoryData)
+                chartDataTemp.push(categoryData)
             }else indexOverallime=index
 
 
@@ -228,8 +219,9 @@ export default class MyLineGraph extends Component {
 
         }
         if(indexOverallime=-1){
-            var chartDataCategoryBiz = {}
-            chartDataCategoryBiz.name = "overall_time"
+            var categoryData = {}
+            categoryData.label = "overall_time"
+            categoryData.data =[]
             for(var i = 0; i < tempArray[2].length; i++) {
                 for(var i = 0; i < tempArray[2].length; i++){
                     var instanceName = tempArray[2][i]["instance"]["name"]
@@ -238,15 +230,14 @@ export default class MyLineGraph extends Component {
                         if(selections[index]!="overall_time")overallTime = overallTime - tempArray[2][i][selections[index]]
                     }
 
-                    chartDataCategoryBiz[instanceName] = Math.round(overallTime * 100) / 100;
+                    categoryData.data.push(Math.round(overallTime * 100) / 100);
 
                 }
             }
-
-            var chartDataArrayWithOverallTime=[]
-            chartDataArrayWithOverallTime.push(chartDataCategoryBiz)
-            chartDataArrayWithOverallTime = chartDataArrayWithOverallTime.concat(chartDataArrayBiz)
-            chartDataArrayBiz= chartDataArrayWithOverallTime
+            categoryData.backgroundColor= colors[colorindex%8];
+            colorindex++;
+            console.log(categoryData)
+            chartDataTemp.push(categoryData)
         }
 
         //get all instances as names
@@ -256,26 +247,20 @@ export default class MyLineGraph extends Component {
         }
 
 
+
+
+
+        var barChartData = {
+            labels: instanceNames,
+            datasets: chartDataTemp
+        };
+
+
+
         var chartHeight = window.innerHeight - 200;
         var chartWidth = window.innerWidth - window.innerWidth * 0.15;
 
-        console.log(chartDataArrayBiz);
-        const ds = new DataSet();
-        let dv = ds.createView().source(chartDataArrayBiz);
-        dv.transform({
-            type: "fold",
-            fields: instanceNames,
-            // 展开字段集
-            key: "月份",
-            // key字段
-            value: "月均降雨量" // value字段
-        });
-
-
-
-
-
-
+        console.log(chartDataTemp);
       //retrieve display options
       var times = [];
       for (let name in tempArray[2][0]) {
@@ -371,7 +356,7 @@ export default class MyLineGraph extends Component {
                   </Select>
                   <Table columns={columns} dataSource={datasource}></Table>
               </Modal>
-              <Row> <Title level={4}>{displayedName}</Title></Row>
+              {/*<Row> <Title level={4}>{displayedName}</Title></Row>*/}
               <Row type="flex">
                   <Col span={15}>
                       <Select
@@ -393,21 +378,30 @@ export default class MyLineGraph extends Component {
                   </Col>
               </Row>
             <div style={{ display: "flex", maxWidth: 1600 }}>
-                <Chart height={chartHeight} width={chartWidth} data={dv}  forceFit>
-                    <Legend />
-                    <Axis name="x" />
-                    <Axis name="y" />
-                    <Tooltip />
-                    <Geom
-                        type="intervalStack"
-                        position="月份*月均降雨量"
-                        color={"name"}
-                        style={{
-                            stroke: "#fff",
-                            lineWidth: 1
-                        }}
-                    />
-                </Chart>
+                <Bar
+                    data={barChartData}
+                    width={chartWidth}
+                    height={chartHeight}
+                    options={{
+                        title: {
+                        display: true,
+                        text: displayedName
+                    },
+                        tooltips: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                        responsive: true,
+                        scales: {
+                        xAxes: [{
+                        stacked: true,
+                    }],
+                        yAxes: [{
+                        stacked: true
+                    }]
+                    }
+                    }}
+                />
             </div>
 
           </div>
