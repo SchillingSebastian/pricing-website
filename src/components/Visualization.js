@@ -34,15 +34,15 @@ export default class MyLineGraph extends Component {
 
     loadData(){
         this.setState({isLoading: true});
-        console.log("fetching "+ "http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
-        fetch("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        console.log("fetching "+ "http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        fetch("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
             .then(response => {
                 console.log(response)
                 if (response.ok) {
                     return response.json();
                 } else {
                     ;
-                    throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                    throw new Error("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
                 }
             })
             .then(json => this.setState({stateData: json, isLoading: false}))
@@ -51,7 +51,7 @@ export default class MyLineGraph extends Component {
     }
 
     showModal = () => {
-        fetch("http://35.246.177.194:8080/api/testsets/all")
+        fetch("http://46.4.80.238:8080/api/testsets/all")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -61,7 +61,7 @@ export default class MyLineGraph extends Component {
             })
             .then(json => this.setState({allTestsets: json}))
             .catch(error => console.log("error fetching testsets"));
-        fetch("http://35.246.177.194:8080/api/settings/all")
+        fetch("http://46.4.80.238:8080/api/settings/all")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -79,7 +79,7 @@ export default class MyLineGraph extends Component {
     };
 
     updateSettingTable = () =>{
-        fetch("http://35.246.177.194:8080/api/settings/name/"+this.state.selectedSetting)
+        fetch("http://46.4.80.238:8080/api/settings/name/"+this.state.selectedSetting)
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -101,8 +101,8 @@ export default class MyLineGraph extends Component {
             },
             cancelText: 'No',
             onOk() {
-                console.log("http://35.246.177.194:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing")
-                fetch("http://35.246.177.194:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing",{method: 'POST'})
+                console.log("http://46.4.80.238:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing")
+                fetch("http://46.4.80.238:8080/api/jobs/add/name/"+testsetName+"/"+ settingName + "/"+1+"/webrequestMissing",{method: 'POST'})
                     .then(response => {
                         if (response.ok) {
                             return response.json();
@@ -119,13 +119,13 @@ export default class MyLineGraph extends Component {
     }
 
     handleOk = e => {
-        console.log("fetching"+ "http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
-        fetch("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        console.log("fetching"+ "http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        fetch("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
             .then(response => {
                 if (response.ok) {
                     return response.json();
                 } else {
-                    throw new Error("http://35.246.177.194:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                    throw new Error("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
                 }
             })
             .then(json => this.setState({stateData: json}))

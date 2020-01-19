@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
+import moment from 'moment';
 const {Title} = Typography;
 
 export default class RunningJobs extends Component{
@@ -11,8 +12,8 @@ export default class RunningJobs extends Component{
         };
     }
     componentDidMount() {
-        console.log("http://35.246.177.194:8080/api/jobs/running")
-        fetch("http://35.246.177.194:8080/api/jobs/running")
+        console.log("http://46.4.80.238:8080/api/jobs/running")
+        fetch("http://46.4.80.238:8080/api/jobs/running")
             .then(response => {
                 console.log(response)
                 if (response.ok) {
@@ -59,11 +60,10 @@ export default class RunningJobs extends Component{
                 var settingTable={}
                 Object.keys(runningjobs[i]).forEach(function (key) {
 
-                    settingTable[key] = runningjobs[i][key];
-
-
-
-
+                    if(key == "scheduled" || key =="executed"){
+                        if(runningjobs[i][key] != null) settingTable[key] = moment.utc(runningjobs[i][key]).format("Do MMM YYYY, h:mm:ss a")
+                    }
+                    else settingTable[key] = runningjobs[i][key];
                 });
                 settingTable.key = runningjobs[i]["testsetName"] +keyindex;
                 tabledata.push(settingTable);
