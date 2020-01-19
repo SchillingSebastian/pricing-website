@@ -8,20 +8,20 @@ const {Title} = Typography;
 const {confirm} = Modal;
 
 
-export default class MyLineGraph extends Component {
+export default class InstanceVisualization extends Component {
     constructor(props) {
-        super(props);
+        super(props)
+        let stateInstance = "ring_n10p0.8s2.lp.gz";
+        if('query' in props.location) stateInstance = props.location.query.instance;
+        console.log(props)
         this.state = {
             stateData: null,
             isLoading: false,
             error: null,
             selectedCat: ["pricing_time"],
             modalVisible:false,
-            allTestsets: null,
-            allSettings:null,
-            selectedTestset:"short",
-            selectedSetting:"default",
-            settingData:null,
+            allInstances: null,
+            selectedInstance: stateInstance,
             modalSettingTableVisible:false
         };
     }
@@ -34,15 +34,15 @@ export default class MyLineGraph extends Component {
 
     loadData(){
         this.setState({isLoading: true});
-        console.log("fetching "+ "http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
-        fetch("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        console.log("fetching "+ "http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance)
+        fetch("http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance)
             .then(response => {
                 console.log(response)
                 if (response.ok) {
                     return response.json();
                 } else {
                     ;
-                    throw new Error("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                    throw new Error("fetching "+ "http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance);
                 }
             })
             .then(json => this.setState({stateData: json, isLoading: false}))
@@ -51,7 +51,7 @@ export default class MyLineGraph extends Component {
     }
 
     showModal = () => {
-        fetch("http://46.4.80.238:8080/api/testsets/all")
+        fetch("http://46.4.80.238:8080/api/instances/all")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -59,20 +59,8 @@ export default class MyLineGraph extends Component {
                     throw new Error("Error in fetching API Data");
                 }
             })
-            .then(json => this.setState({allTestsets: json}))
+            .then(json => this.setState({allInstances: json}))
             .catch(error => console.log("error fetching testsets"));
-        fetch("http://46.4.80.238:8080/api/settings/all")
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error("Error in fetching API Data");
-                }
-            })
-            .then(json => this.setState({allSettings: json}))
-            .catch(error => console.log("error fetching settings"));
-
-
         this.setState({
             modalVisible: true,
         });
@@ -90,7 +78,7 @@ export default class MyLineGraph extends Component {
             .then(json => this.setState({settingData: json, modalSettingTableVisible: true}))
             .catch(error => console.log("error fetching settingdata"));
     }
-    showPropsConfirm(testsetName,settingName) {
+    /*showPropsConfirm(testsetName,settingName) {
         confirm({
             title: 'Run missing',
             content: 'This testset/setting combination is missing in the database. Do you want to schedule a run?',
@@ -116,20 +104,20 @@ export default class MyLineGraph extends Component {
             onCancel() {
             },
         });
-    }
+    }*/
 
     handleOk = e => {
-        console.log("fetching"+ "http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
-        fetch("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting)
+        console.log("fetching"+ "http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance)
+        fetch("http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance)
             .then(response => {
                 if (response.ok) {
                     return response.json();
                 } else {
-                    throw new Error("http://46.4.80.238:8080/api/testdata/testset/name/"+this.state.selectedTestset+"/"+this.state.selectedSetting);
+                    throw new Error("http://46.4.80.238:8080/api/testdata/instance/name/"+this.state.selectedInstance);
                 }
             })
             .then(json => this.setState({stateData: json}))
-            .catch(error => this.showPropsConfirm(this.state.selectedTestset, this.state.selectedSetting));
+            .catch(error => this.showPropsConfirm(this.state.selectedInstance, this.state.selectedSetting));
 
         this.setState({
             modalVisible: false,
@@ -191,7 +179,7 @@ export default class MyLineGraph extends Component {
         var tempArray = [];
         Object.keys(stateData).forEach(function (key) {
             tempArray.push(stateData[key]);
-        });
+        })
         var chartDataTemp=[]
 
 
@@ -243,7 +231,7 @@ export default class MyLineGraph extends Component {
         //get all instances as names
         var instanceNames=[]
         for(var i = 0; i < tempArray[2].length; i++){
-            instanceNames.push(tempArray[2][i]["instance"]["name"])
+            instanceNames.push(tempArray[2][i]["instance"]["name"] + ' ['+tempArray[2][i]["setting"]["name"]+"]")
         }
 
 
@@ -261,150 +249,96 @@ export default class MyLineGraph extends Component {
         var chartWidth = window.innerWidth - window.innerWidth * 0.15;
 
         console.log(chartDataTemp);
-      //retrieve display options
-      var times = [];
-      for (let name in tempArray[2][0]) {
+        //retrieve display options
+        var times = [];
+        for (let name in tempArray[2][0]) {
 
-        var nameStr = name.toString();
-        if(name.toString()!="job" && name.toString()!="instance" && name.toString()!="id" && name.toString()!="setting")times.push(<Option key={nameStr}>{nameStr}</Option>);
-      }
+            var nameStr = name.toString();
+            if(name.toString()!="job" && name.toString()!="instance" && name.toString()!="id" && name.toString()!="setting")times.push(<Option key={nameStr}>{nameStr}</Option>);
+        }
 
-      //retrieveTestsets to display in modal
-        var testsetOptions=[]
-        var testsets = this.state.allTestsets
+        //retrieveTestsets to display in modal
+        var instanceOptions=[]
+        var testsets = this.state.allInstances
         if(testsets!= null){
             Object.keys(testsets).forEach(function (key) {
-                testsetOptions.push(<Option key={testsets[key].name}> {testsets[key].name} </Option>);
+                instanceOptions.push(<Option key={testsets[key].name}> {testsets[key].name} </Option>);
             });
 
         }
 
-        //retrieve Settings to be displayed in modal
-        var settingOptions=[]
-        var settings = this.state.allSettings
-        if(settings != null){
-            Object.keys(settings).forEach(function (key) {
-                settingOptions.push(<Option key={settings[key].name}> {settings[key].name} </Option>);
-            });
-        }
 
-        //setTableData
-        var columns=[
-            {
-                title: 'Settingname',
-                dataIndex: 'settingname',
-                key: 'settingname'
-            },
-            {
-                title: 'Value',
-                dataIndex: 'value',
-                key: 'value'
-            }
-
-        ]
-        var datasource=[];
-        var displayedSetting = this.state.settingData;
-        if(displayedSetting != null){
-            var keyindex =0;
-            Object.keys(displayedSetting).forEach(function (key) {
-                if(key != "id" && key!="name" && key != "settingsfile"){
-                    var settingTable={}
-                    settingTable.settingname = key;
-                    settingTable.value = ""+displayedSetting[key]
-                    settingTable.key = keyindex
-                    datasource.push(settingTable)
-                    keyindex++;
-                }
-            });
-        }
-
-
-
-        var displayedName = tempArray[0]+' on setting '+tempArray[1]["settingsfile"]
+        var displayedName = tempArray[0]
         return (
-          <div className={classes.graphContainer}>
-              <Modal
-                  title="Select testset and setting"
-                  visible={this.state.modalVisible}
-                  onOk={this.handleOk}
-                  onCancel={this.handleCancel}
-              >
-                  <Row><div>Testset</div></Row>
-                  <Select
-                      style={{ width: "100%" }}
-                      mode="single"
-                      placeholder="Please Select"
-                      defaultValue={this.state.selectedTestset}
-                      onChange={value => {
-                          this.setState({ selectedTestset: value });
-                      }}
-                  >
-                      {testsetOptions}
-                  </Select>
-                  <Row><div>Setting</div></Row>
-                  <Select
-                      style={{ width: "100%" }}
-                      mode="single"
-                      placeholder="Please Select"
-                      defaultValue={this.state.selectedSetting}
-                      onChange={value => {
-                          this.setState({ selectedSetting: value });
-                          this.updateSettingTable();
-                      }}
-                  >
-                      {settingOptions}
-                  </Select>
-                  <Table columns={columns} dataSource={datasource}></Table>
-              </Modal>
-              {/*<Row> <Title level={4}>{displayedName}</Title></Row>*/}
-              <Row type="flex">
-                  <Col span={15}>
-                      <Select
-                          style={{ width: "100%" }}
-                          mode="multiple"
-                          placeholder="Please Select"
-                          defaultValue={this.state.selectedCat}
-                          onChange={value => {
+            <div className={classes.graphContainer}>
+                <Modal
+                    title="Select Instance"
+                    visible={this.state.modalVisible}
+                    onOk={this.handleOk}
+                    onCancel={this.handleCancel}
+                >
+                    <Row><div>Instance</div></Row>
+                    <Select
+                        style={{ width: "100%" }}
+                        mode="single"
+                        placeholder="Please Select"
+                        defaultValue={this.state.selectedInstance}
+                        onChange={value => {
+                            this.setState({ selectedInstance: value });
+                        }}
+                    >
+                        {instanceOptions}
+                    </Select>
+                </Modal>
+                {/*<Row> <Title level={4}>{displayedName}</Title></Row>*/}
+                <Row type="flex">
+                    <Col span={15}>
+                        <Select
+                            style={{ width: "100%" }}
+                            mode="multiple"
+                            placeholder="Please Select"
+                            defaultValue={this.state.selectedCat}
+                            onChange={value => {
 
-                              this.setState({ selectedCat: value });
-                          }}
-                      >
-                          {times}
-                      </Select>
-                  </Col>
-                  <Col span={1}></Col>
-                  <Col span={1}>
-                      <Button type="primary" style={{ flex: 1 }} onClick={this.showModal}>Configure Chart</Button>
-                  </Col>
-              </Row>
-            <div style={{ display: "flex", maxWidth: 1600 }}>
-                <Bar
-                    data={barChartData}
-                    width={chartWidth}
-                    height={chartHeight}
-                    options={{
-                        title: {
-                        display: true,
-                        text: displayedName
-                    },
-                        tooltips: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                        responsive: true,
-                        scales: {
-                        xAxes: [{
-                        stacked: true,
-                    }],
-                        yAxes: [{
-                        stacked: true
-                    }]
-                    }
-                    }}
-                />
+                                this.setState({ selectedCat: value });
+                            }}
+                        >
+                            {times}
+                        </Select>
+                    </Col>
+                    <Col span={1}></Col>
+                    <Col span={1}>
+                        <Button type="primary" style={{ flex: 1 }} onClick={this.showModal}>Configure Chart</Button>
+                    </Col>
+                </Row>
+                <div style={{ display: "flex", maxWidth: 1600 }}>
+                    <Bar
+                        data={barChartData}
+                        width={chartWidth}
+                        height={chartHeight}
+                        options={{
+                            title: {
+                                display: true,
+                                text: displayedName
+                            },
+                            tooltips: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            responsive: true,
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                }],
+                                yAxes: [{
+                                    stacked: true
+                                }]
+                            }
+                        }}
+                    />
+                </div>
+
             </div>
-
-          </div>
         );
     }
 

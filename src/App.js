@@ -2,12 +2,13 @@ import React from "react";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import "./App.css";
 import Information from "./components/Information";
-import MyLineGraph from "./components/Visualization";
+import TestsetVisualization from "./components/VisualizationTestset";
 import RunningJobs from "./components/Task-Running";
 import AllJobs from "./components/Task-All";
 import ScheduledJobs from "./components/Task-Scheduled";
 
 import { Layout, Menu, Icon } from "antd";
+import InstanceVisualization from "./components/VisualizationInstance";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -44,16 +45,27 @@ class App extends React.Component {
                 <span>Information</span>
                 <Link to="/" />
               </Menu.Item>
-              <Menu.Item
-                key="2"
-                onClick={() => this.updateStatus("Visualization")}
-              >
-                <Icon type="pie-chart" />
-                <span>Visualization</span>
-                <Link to="/visualization" />
-              </Menu.Item>
               <SubMenu
-                key="sub1"
+                  key="sub1"
+                  title={
+                    <span>
+                    <Icon type="pie-chart" />
+                    <span>Visualization</span>
+                  </span>
+                  }
+              >
+                <Menu.Item key="2">
+                  <span>Testsets</span>
+                  <Link to="/visualization/testsets" />
+                </Menu.Item>
+                <Menu.Item key="3">
+                  <span>Instances</span>
+                  <Link to="/visualization/instances"/>
+                </Menu.Item>
+              </SubMenu>
+
+              <SubMenu
+                key="sub2"
                 title={
                   <span>
                     <Icon type="desktop" />
@@ -61,11 +73,11 @@ class App extends React.Component {
                   </span>
                 }
               >
-                <Menu.Item key="3"><span>Running</span><Link to="/running" /></Menu.Item>
-                <Menu.Item key="4">Scheduled<Link to="/scheduled" /></Menu.Item>
-                <Menu.Item key="5">All<Link to="/all" /></Menu.Item>
+                <Menu.Item key="4"><span>Running</span><Link to="/running" /></Menu.Item>
+                <Menu.Item key="5">Scheduled<Link to="/scheduled" /></Menu.Item>
+                <Menu.Item key="6">All<Link to="/all" /></Menu.Item>
               </SubMenu>
-              <Menu.Item key="6">
+              <Menu.Item key="7">
                 <Icon type="line-chart" />
                 <span> Server Load</span>
               </Menu.Item>
@@ -75,7 +87,8 @@ class App extends React.Component {
             <Header style={{ background: "#fff", padding: 0 }} />
             <Content style={{ margin: "0 16px", background: "#fff" }}>
               <Route exact path="/" component={Information} />
-              <Route exact path="/visualization" component={MyLineGraph} />
+              <Route exact path="/visualization/testsets" component={TestsetVisualization} />
+              <Route exact path="/visualization/instances" component={InstanceVisualization}/>
               <Route exact path="/running" component={RunningJobs} />
               <Route exact path="/all" component={AllJobs}/>
               <Route exact path="/scheduled" component={ScheduledJobs}/>
