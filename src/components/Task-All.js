@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
+import moment from "moment";
 const {Title} = Typography;
 
 export default class AllJobs extends Component{
@@ -11,8 +12,8 @@ export default class AllJobs extends Component{
         };
     }
     componentDidMount() {
-        console.log("http://35.246.177.194:8080/api/jobs/all")
-        fetch("http://35.246.177.194:8080/api/jobs/all")
+        console.log("http://46.4.80.238:8080/api/jobs/all")
+        fetch("http://46.4.80.238:8080/api/jobs/all")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -65,29 +66,27 @@ export default class AllJobs extends Component{
 
         ]
         var tabledata=[]
-        var runningjobs = this.state.runningJobsData;
+        var allJobs = this.state.runningJobsData;
 
-        if(runningjobs != null){
+        if(allJobs != null){
             var keyindex =0;
-            for(var i =0; i< runningjobs.length; i++){
+            for(var i =0; i< allJobs.length; i++){
                 var settingTable={}
-                Object.keys(runningjobs[i]).forEach(function (key) {
+                Object.keys(allJobs[i]).forEach(function (key) {
                     if(key != "setting" && key!="testset"){
-                        settingTable[key] = runningjobs[i][key];
+                        if(key =="date_inserted" || key=="date_executed" || key =="date_finished"){
+                            if(allJobs[i][key] != null)settingTable[key] = moment.utc(allJobs[i][key]).format("Do MMM YYYY, h:mm:ss a")
+                        }
+                        else settingTable[key] = allJobs[i][key];
                     }
                     if(key == "setting"){
-                        settingTable["settingname"] = runningjobs[i][key]["name"]
+                        settingTable["settingname"] = allJobs[i][key]["name"]
                     }
                     if(key == "testset"){
-                        settingTable["testsetname"] = runningjobs[i][key]["name"]
+                        settingTable["testsetname"] = allJobs[i][key]["name"]
                     }
-
-
-
-
-
                 });
-                settingTable.key = runningjobs[i]["testset"]["name"] +keyindex;
+                settingTable.key = allJobs[i]["testset"]["name"] +keyindex;
                 tabledata.push(settingTable);
                 console.log(settingTable)
             }

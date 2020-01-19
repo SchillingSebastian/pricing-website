@@ -10,6 +10,7 @@
     "antd": "^3.26.5",
     "bizcharts": "^3.5.6",
     "chart.js": "^2.9.3",
+    "moment": "^2.24.0",
     "react": "^16.12.0",
     "react-chartjs-2": "^2.8.0",
     "react-dom": "^16.12.0",

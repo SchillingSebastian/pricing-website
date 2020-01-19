@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import {Button, Select, Row, Col, Typography, Modal, Table} from "antd";
+import moment from "moment";
 const {Title} = Typography;
 
 export default class ScheduledJobs extends Component{
@@ -11,8 +12,8 @@ export default class ScheduledJobs extends Component{
         };
     }
     componentDidMount() {
-        console.log("http://35.246.177.194:8080/api/jobs/scheduled")
-        fetch("http://35.246.177.194:8080/api/jobs/scheduled")
+        console.log("http://46.4.80.238:8080/api/jobs/scheduled")
+        fetch("http://46.4.80.238:8080/api/jobs/scheduled")
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -46,17 +47,6 @@ export default class ScheduledJobs extends Component{
                 dataIndex: 'date_inserted',
                 key: 'scheduled'
             },
-
-            {
-                title: 'Executed',
-                dataIndex: 'date_executed',
-                key: 'executed'
-            },
-            {
-                title: 'Finished',
-                dataIndex: 'date_finished',
-                key:'finished'
-            },
             {
                 title: 'Author',
                 dataIndex: 'author',
@@ -65,29 +55,29 @@ export default class ScheduledJobs extends Component{
 
         ]
         var tabledata=[]
-        var runningjobs = this.state.runningJobsData;
+        var scheduledJobs = this.state.runningJobsData;
 
-        if(runningjobs != null){
+        if(scheduledJobs != null){
             var keyindex =0;
-            for(var i =0; i< runningjobs.length; i++){
+            for(var i =0; i< scheduledJobs.length; i++){
                 var settingTable={}
-                Object.keys(runningjobs[i]).forEach(function (key) {
+                Object.keys(scheduledJobs[i]).forEach(function (key) {
                     if(key != "setting" && key!="testset"){
-                        settingTable[key] = runningjobs[i][key];
+                        if(key =="date_inserted"){
+                            if(scheduledJobs[i][key] != null) settingTable[key] = moment.utc(scheduledJobs[i][key]).format("Do MMM YYYY, h:mm:ss a")
+                        }else if(key=="date_executed" || key =="date_finished") {
+                            //nichts
+                        }
+                        else settingTable[key] = scheduledJobs[i][key];
                     }
                     if(key == "setting"){
-                        settingTable["settingname"] = runningjobs[i][key]["name"]
+                        settingTable["settingname"] = scheduledJobs[i][key]["name"]
                     }
                     if(key == "testset"){
-                        settingTable["testsetname"] = runningjobs[i][key]["name"]
+                        settingTable["testsetname"] = scheduledJobs[i][key]["name"]
                     }
-
-
-
-
-
                 });
-                settingTable.key = runningjobs[i]["testset"]["name"] +keyindex;
+                settingTable.key = scheduledJobs[i]["testset"]["name"] +keyindex;
                 tabledata.push(settingTable);
                 console.log(settingTable)
             }
