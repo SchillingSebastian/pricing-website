@@ -11,7 +11,7 @@ const {confirm} = Modal;
 export default class InstanceVisualization extends Component {
     constructor(props) {
         super(props)
-        let stateInstance = "ring_n10p0.8s2.lp.gz";
+        let stateInstance = "C205.lp.gz";
         if('query' in props.location) stateInstance = props.location.query.instance;
         console.log(props)
         this.state = {

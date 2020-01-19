@@ -20,7 +20,7 @@ export default class TestsetVisualization extends Component {
             modalVisible:false,
             allTestsets: null,
             allSettings:null,
-            selectedTestset:"short",
+            selectedTestset:"customGoodinstances",
             selectedSetting:"default",
             settingData:null,
             modalSettingTableVisible:false,
